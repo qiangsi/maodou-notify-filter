@@ -46,4 +46,7 @@
     <string name="import_ok">导入成功</string>
     <string name="no_file">未找到配置文件</string>
     <string name="version">版本</string>
+    <string name="biometric_unlock">指纹/面容解锁</string>
+    <string name="biometric_on">开启（指纹或设备支持的生物识别）</string>
+    <string name="biometric_off">关闭</string>
 </resources>

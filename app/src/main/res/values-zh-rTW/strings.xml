@@ -45,4 +45,7 @@
     <string name="import_ok">匯入成功</string>
     <string name="no_file">未找到設定檔</string>
     <string name="version">版本</string>
+    <string name="biometric_unlock">指紋/面容解鎖</string>
+    <string name="biometric_on">開啟（指紋或裝置支援的生物辨識）</string>
+    <string name="biometric_off">關閉</string>
 </resources>

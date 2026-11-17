@@ -45,4 +45,7 @@
     <string name="import_ok">Imported</string>
     <string name="no_file">Config file not found</string>
     <string name="version">Version</string>
+    <string name="biometric_unlock">Fingerprint / Face unlock</string>
+    <string name="biometric_on">On (fingerprint or supported biometrics)</string>
+    <string name="biometric_off">Off</string>
 </resources>

@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.os.Build;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -294,6 +295,12 @@ public class MainActivity extends Activity {
         add(items, "pick", t(R.string.language), langLabel());
         add(items, "pick", t(R.string.app_lock),
             sp.getBoolean("lock", false) ? "ON" : "OFF");
+        if (sp.getBoolean("lock", false) && !sp.getString("lock_code", "").isEmpty()
+                && Build.VERSION.SDK_INT >= 28
+                && getPackageManager().hasSystemFeature("android.hardware.fingerprint")) {
+            add(items, "pick", t(R.string.biometric_unlock),
+                sp.getBoolean("lock_biometric", false) ? "ON" : "OFF");
+        }
         add(items, "info", t(R.string.faq), "");
         add(items, "info", t(R.string.feedback), "");
         add(items, "info", t(R.string.check_update), "");
@@ -304,6 +311,7 @@ public class MainActivity extends Activity {
             if (m.get("type").equals("pick")) {
                 if (label.equals(t(R.string.theme_color))) themeDialog();
                 else if (label.equals(t(R.string.language))) langDialog();
+                else if (label.equals(t(R.string.biometric_unlock))) biometricDialog();
                 else lockDialog();
             } else if (m.get("type").equals("info")) {
                 if (label.equals(t(R.string.faq))) faqDialog();
@@ -365,6 +373,16 @@ public class MainActivity extends Activity {
         new AlertDialog.Builder(this).setTitle(t(R.string.app_lock))
             .setItems(opts, (d, w) -> {
                 getSharedPreferences(PREF, MODE_PRIVATE).edit().putBoolean("lock", w == 0).apply();
+                showSettings();
+            }).show();
+    }
+
+    void biometricDialog() {
+        SharedPreferences sp = getSharedPreferences(PREF, MODE_PRIVATE);
+        String[] opts = {t(R.string.biometric_on), t(R.string.biometric_off)};
+        new AlertDialog.Builder(this).setTitle(t(R.string.biometric_unlock))
+            .setItems(opts, (d, w) -> {
+                sp.edit().putBoolean("lock_biometric", w == 0).apply();
                 showSettings();
             }).show();
     }
