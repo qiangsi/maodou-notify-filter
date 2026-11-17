@@ -123,6 +123,11 @@ public class MainActivity extends Activity {
         }
     }
 
+    String versionName() {
+        try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; }
+        catch (Exception e) { return "?"; }
+    }
+
     boolean nlServiceEnabled() {
         String flat = android.provider.Settings.Secure.getString(getContentResolver(),
             "enabled_notification_listeners");
@@ -141,7 +146,8 @@ public class MainActivity extends Activity {
 
     void showSmart() {
         if (!nlServiceEnabled()) askNotificationAccess();
-        title.setText("🌱 " + t(R.string.tab_smart));
+        title.setText("🌱 " + t(R.string.tab_smart)
+            + "  v" + versionName());
         btnPass.setText(t(R.string.pass_rule));
         btnFilter.setText(t(R.string.filter_rule));
         btnAi.setText("AI");
