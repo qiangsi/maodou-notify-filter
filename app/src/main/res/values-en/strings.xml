@@ -54,4 +54,5 @@
     <string name="go_grant">Grant</string>
     <string name="ai_provider">AI provider</string>
     <string name="cat_pie">Notification categories</string>
+    <string name="perm_warn">⚠ Notification access not granted — filtering is off. Tap to grant.</string>
 </resources>

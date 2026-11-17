@@ -46,6 +46,7 @@ public class FilterService extends NotificationListenerService {
 
     @Override
     public void onNotificationPosted(StatusBarNotification sbn) {
+        if (sbn == null || getPackageName().equals(sbn.getPackageName())) return;
         Notification n = sbn.getNotification();
         SharedPreferences sp = getSharedPreferences(PREF, MODE_PRIVATE);
         sp.edit().putLong("last_seen", System.currentTimeMillis()).apply();

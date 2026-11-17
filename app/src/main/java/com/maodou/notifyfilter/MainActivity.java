@@ -145,13 +145,39 @@ public class MainActivity extends Activity {
     }
 
     void showSmart() {
-        if (!nlServiceEnabled()) askNotificationAccess();
+        boolean ok = nlServiceEnabled();
+        if (!ok && !getSharedPreferences(PREF, MODE_PRIVATE).getBoolean("perm_asked", false)) {
+            getSharedPreferences(PREF, MODE_PRIVATE).edit().putBoolean("perm_asked", true).apply();
+            askNotificationAccess();
+        }
         title.setText("🌱 " + t(R.string.tab_smart)
-            + "  v" + versionName());
-        btnPass.setText(t(R.string.pass_rule));
-        btnFilter.setText(t(R.string.filter_rule));
-        btnAi.setText("AI");
+            + "  v" + versionName()
+            + (ok ? "" : "  ⚠"));
         SharedPreferences sp = getSharedPreferences(PREF, MODE_PRIVATE);
+        if (!ok) {
+            Map<String, Object> warn = new HashMap<>();
+            warn.put("type", "warn");
+            warn.put("label", t(R.string.perm_warn));
+            List<Map<String, Object>> withWarn = new ArrayList<>();
+            withWarn.add(warn);
+            withWarn.addAll(buildSmartItems(sp));
+            list.setAdapter(makeAdapter(withWarn));
+            list.setOnItemClickListener((p, v, pos, id) -> {
+                Map<String, Object> m = withWarn.get(pos);
+                if ("warn".equals(m.get("type"))) askNotificationAccess();
+                if ("ai".equals(m.get("type"))) aiConfigDialog();
+            });
+            return;
+        }
+        List<Map<String, Object>> items = buildSmartItems(sp);
+        list.setAdapter(makeAdapter(items));
+        list.setOnItemClickListener((p, v, pos, id) -> {
+            Map<String, Object> m = items.get(pos);
+            if ("ai".equals(m.get("type"))) { aiConfigDialog(); }
+        });
+    }
+
+    List<Map<String, Object>> buildSmartItems(SharedPreferences sp) {
         List<Map<String, Object>> items = new ArrayList<>();
         // global switch
         Map<String, Object> g = new HashMap<>();
@@ -176,11 +202,7 @@ public class MainActivity extends Activity {
         cfg.put("type", "ai");
         cfg.put("label", t(R.string.ai_config));
         items.add(cfg);
-        list.setAdapter(makeAdapter(items));
-        list.setOnItemClickListener((p, v, pos, id) -> {
-            Map<String, Object> m = items.get(pos);
-            if ("ai".equals(m.get("type"))) { aiConfigDialog(); }
-        });
+        return items;
     }
 
     static String KEY_GLOBAL_ON() { return "global_on"; }

@@ -55,4 +55,5 @@
     <string name="go_grant">去授权</string>
     <string name="ai_provider">AI 提供商</string>
     <string name="cat_pie">通知类别占比</string>
+    <string name="perm_warn">⚠ 未授予通知使用权，过滤不生效——点这里去授权</string>
 </resources>
