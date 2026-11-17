@@ -55,4 +55,5 @@
     <string name="ai_provider">AI provider</string>
     <string name="cat_pie">Notification categories</string>
     <string name="perm_warn">⚠ Notification access not granted — filtering is off. Tap to grant.</string>
+    <string name="change_code">Set / change PIN</string>
 </resources>

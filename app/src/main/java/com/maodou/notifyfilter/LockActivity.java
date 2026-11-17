@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -34,6 +35,7 @@ public class LockActivity extends Activity {
             if (code.isEmpty()) {
                 if (input.length() >= 4) {
                     sp.edit().putString("lock_code", input).putBoolean("lock", true).apply();
+                    Toast.makeText(this, R.string.import_ok, Toast.LENGTH_SHORT).show();
                     finish();
                 } else {
                     tv.setText(getString(R.string.lock_code_too_short));

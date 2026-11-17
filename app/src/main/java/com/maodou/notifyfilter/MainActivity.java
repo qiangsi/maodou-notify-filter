@@ -314,13 +314,13 @@ public class MainActivity extends Activity {
             segBtns[i] = sb;
             seg.addView(sb);
         }
-        segBtns[0].performClick();
-        body.addView(seg, new LinearLayout.LayoutParams(-1, -2));
-        // 图表内容放 seg 下面的容器
+        // 先建图表容器再触发首绘，避免 renderChart 落在 null host 上
         list.setVisibility(View.GONE);
         chartHost = new LinearLayout(this);
         chartHost.setOrientation(LinearLayout.VERTICAL);
+        body.addView(seg, new LinearLayout.LayoutParams(-1, -2));
         body.addView(chartHost, new LinearLayout.LayoutParams(-1, 0, 1f));
+        segBtns[0].performClick();
     }
 
     LinearLayout chartHost;
@@ -551,12 +551,23 @@ public class MainActivity extends Activity {
     }
 
     void lockDialog() {
-        String[] opts = {t(R.string.lock_on),
-                         t(R.string.lock_off)};
+        SharedPreferences sp = getSharedPreferences(PREF, MODE_PRIVATE);
+        boolean on = sp.getBoolean("lock", false) && !sp.getString("lock_code", "").isEmpty();
+        String[] opts = new String[2];
+        opts[0] = on ? t(R.string.lock_off) : t(R.string.lock_on);
+        opts[1] = t(R.string.change_code);
         new AlertDialog.Builder(this).setTitle(t(R.string.app_lock))
             .setItems(opts, (d, w) -> {
-                getSharedPreferences(PREF, MODE_PRIVATE).edit().putBoolean("lock", w == 0).apply();
-                showSettings();
+                if (on && w == 0) {
+                    // 关闭
+                    sp.edit().putBoolean("lock", false).remove("lock_code")
+                        .putBoolean("lock_biometric", false).apply();
+                    showSettings();
+                } else {
+                    // 开启/修改：去 LockActivity 设密码
+                    sp.edit().putBoolean("lock", true).apply();
+                    startActivity(new Intent(this, LockActivity.class));
+                }
             }).show();
     }
 
