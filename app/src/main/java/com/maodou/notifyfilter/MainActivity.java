@@ -310,7 +310,7 @@ public class MainActivity extends Activity {
                 else if (label.equals(t(R.string.feedback))) {
                     try { startActivity(new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:siqiangcn@gmail.com"))); } catch (Exception ignored) {}
                 } else {
-                    try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.pgyer.com/maodou-notify"))); } catch (Exception ignored) {}
+                    try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.pgyer.com/mdtzglzs"))); } catch (Exception ignored) {}
                 }
             }
         });
