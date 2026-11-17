@@ -94,7 +94,11 @@ public class MainActivity extends Activity {
         bottomBar = new LinearLayout(this);
         bottomBar.setOrientation(LinearLayout.HORIZONTAL);
         bottomBar.setPadding(dp(8), dp(6), dp(8), dp(10));
-        btnPass = barBtn(); btnFilter = barBtn(); btnAi = barBtn();
+        // 标准底部导航：智能 / 分析 / 设置（点这里切模块）
+        btnPass = navBtn(); btnFilter = navBtn(); btnAi = navBtn();
+        btnPass.setOnClickListener(v -> show("smart"));
+        btnFilter.setOnClickListener(v -> show("analysis"));
+        btnAi.setOnClickListener(v -> show("settings"));
         bottomBar.addView(btnPass, w()); bottomBar.addView(btnFilter, w()); bottomBar.addView(btnAi, w());
         root.addView(bottomBar);
         setContentView(root);
@@ -104,11 +108,12 @@ public class MainActivity extends Activity {
 
     LinearLayout.LayoutParams w() { return new LinearLayout.LayoutParams(0, -2, 1f); }
 
-    Button barBtn() {
+    Button navBtn() {
         Button b = new Button(this);
-        b.setTextSize(14);
+        b.setTextSize(15);
         b.setTextColor(fg());
         b.setBackgroundColor(card());
+        b.setAllCaps(false);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, 1f);
         lp.setMargins(dp(4), 0, dp(4), 0);
         b.setLayoutParams(lp);
@@ -145,11 +150,18 @@ public class MainActivity extends Activity {
     }
 
     void showSmart() {
+        if (chartHost != null) { chartHost.removeAllViews(); body.removeView(chartHost); chartHost = null; }
+        list.setVisibility(View.VISIBLE);
         boolean ok = nlServiceEnabled();
         if (!ok && !getSharedPreferences(PREF, MODE_PRIVATE).getBoolean("perm_asked", false)) {
             getSharedPreferences(PREF, MODE_PRIVATE).edit().putBoolean("perm_asked", true).apply();
             askNotificationAccess();
         }
+        btnPass.setText(t(R.string.tab_smart));
+        btnFilter.setText(t(R.string.tab_analysis));
+        btnAi.setText(t(R.string.tab_settings));
+        btnPass.setTextColor(ok ? accent() : Color.parseColor("#E53935"));
+        btnFilter.setTextColor(fg()); btnAi.setTextColor(fg());
         title.setText("🌱 " + t(R.string.tab_smart)
             + "  v" + versionName()
             + (ok ? "" : "  ⚠"));
@@ -270,18 +282,52 @@ public class MainActivity extends Activity {
     }
 
     void showAnalysis() {
+        btnPass.setText(t(R.string.tab_smart));
+        btnFilter.setText(t(R.string.tab_analysis));
+        btnAi.setText(t(R.string.tab_settings));
+        btnPass.setTextColor(fg()); btnFilter.setTextColor(accent()); btnAi.setTextColor(fg());
         title.setText("📊 " + t(R.string.tab_analysis));
-        btnPass.setText(t(R.string.day));
-        btnFilter.setText(t(R.string.week));
-        btnAi.setText(t(R.string.month));
-        String mode = "day"; Object[] holder = new Object[]{"day"};
-        renderChart("day");
-        btnPass.setOnClickListener(v -> renderChart("day"));
-        btnFilter.setOnClickListener(v -> renderChart("week"));
-        btnAi.setOnClickListener(v -> renderChart("month"));
+        // 日/周/月 页内切换
+        LinearLayout seg = new LinearLayout(this);
+        seg.setOrientation(LinearLayout.HORIZONTAL);
+        seg.setPadding(dp(4), dp(4), dp(4), dp(4));
+        String[] segLabels = {t(R.string.day), t(R.string.week), t(R.string.month)};
+        String[] segModes = {"day", "week", "month"};
+        final TextView[] segBtns = new TextView[3];
+        for (int i = 0; i < 3; i++) {
+            final int idx = i;
+            TextView sb = new TextView(this);
+            sb.setText(segLabels[i]);
+            sb.setTextSize(14);
+            sb.setGravity(Gravity.CENTER);
+            sb.setPadding(dp(16), dp(8), dp(16), dp(8));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, 1f);
+            lp.setMargins(dp(3), 0, dp(3), 0);
+            sb.setLayoutParams(lp);
+            sb.setOnClickListener(v -> {
+                for (int j = 0; j < 3; j++) {
+                    segBtns[j].setBackgroundColor(j == idx ? accent() : card());
+                    segBtns[j].setTextColor(j == idx ? Color.WHITE : fg());
+                }
+                renderChart(segModes[idx]);
+            });
+            segBtns[i] = sb;
+            seg.addView(sb);
+        }
+        segBtns[0].performClick();
+        body.addView(seg, new LinearLayout.LayoutParams(-1, -2));
+        // 图表内容放 seg 下面的容器
+        list.setVisibility(View.GONE);
+        chartHost = new LinearLayout(this);
+        chartHost.setOrientation(LinearLayout.VERTICAL);
+        body.addView(chartHost, new LinearLayout.LayoutParams(-1, 0, 1f));
     }
 
+    LinearLayout chartHost;
+
     void renderChart(String mode) {
+        LinearLayout host = chartHost != null ? chartHost : body;
+        host.removeAllViews();
         SimpleDateFormat df;
         if ("day".equals(mode)) df = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
         else if ("week".equals(mode)) df = new SimpleDateFormat("yyyy-'W'ww", Locale.US);
@@ -300,11 +346,11 @@ public class MainActivity extends Activity {
         List<String> keys = new ArrayList<>(agg.keySet());
         java.util.Collections.sort(keys);
         if (keys.size() > 7) keys = keys.subList(keys.size() - 7, keys.size());
-        body.removeAllViews();
+        chartHost.removeAllViews();
         TextView head = new TextView(this);
         head.setText(t(R.string.notify_stat));
         head.setTextColor(fg()); head.setTextSize(15); head.setPadding(dp(4), dp(8), dp(4), dp(4));
-        body.addView(head);
+        chartHost.addView(head);
         LinearLayout chart = new LinearLayout(this);
         chart.setOrientation(LinearLayout.VERTICAL);
         chart.setBackgroundColor(card());
@@ -336,12 +382,12 @@ public class MainActivity extends Activity {
             chart.addView(row, new LinearLayout.LayoutParams(-1, -2));
             ((LinearLayout.LayoutParams) row.getLayoutParams()).topMargin = dp(6);
         }
-        body.addView(chart);
+        chartHost.addView(chart);
         TextView legend = new TextView(this);
         legend.setText("■ " + t(R.string.passed)
             + "  ■ " + t(R.string.blocked));
         legend.setTextColor(fg()); legend.setTextSize(12); legend.setPadding(dp(4), dp(8), dp(4), 0);
-        body.addView(legend);
+        chartHost.addView(legend);
         renderPie();
     }
 
@@ -366,7 +412,7 @@ public class MainActivity extends Activity {
         TextView head2 = new TextView(this);
         head2.setText(t(R.string.cat_pie));
         head2.setTextColor(fg()); head2.setTextSize(15); head2.setPadding(dp(4), dp(12), dp(4), dp(4));
-        body.addView(head2);
+        chartHost.addView(head2);
         int size = dp(180);
         android.graphics.Paint paint = new android.graphics.Paint();
         paint.setAntiAlias(true);
@@ -399,7 +445,7 @@ public class MainActivity extends Activity {
             row.setTextColor(fg()); row.setTextSize(12);
             wrap.addView(row);
         }
-        body.addView(wrap);
+        chartHost.addView(wrap);
     }
 
     String bucketOf(String day, String mode, SimpleDateFormat df) {
@@ -414,10 +460,13 @@ public class MainActivity extends Activity {
     }
 
     void showSettings() {
+        if (chartHost != null) { chartHost.removeAllViews(); body.removeView(chartHost); chartHost = null; }
+        list.setVisibility(View.VISIBLE);
+        btnPass.setText(t(R.string.tab_smart));
+        btnFilter.setText(t(R.string.tab_analysis));
+        btnAi.setText(t(R.string.tab_settings));
+        btnPass.setTextColor(fg()); btnFilter.setTextColor(fg()); btnAi.setTextColor(accent());
         title.setText("⚙️ " + t(R.string.tab_settings));
-        btnPass.setText(t(R.string.export_cfg));
-        btnFilter.setText(t(R.string.import_cfg));
-        btnAi.setText(t(R.string.version));
         SharedPreferences sp = getSharedPreferences(PREF, MODE_PRIVATE);
         List<Map<String, Object>> items = new ArrayList<>();
         add(items, "pick", t(R.string.theme_color), themeLabel());
