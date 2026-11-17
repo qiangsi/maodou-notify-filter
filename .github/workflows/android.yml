@@ -33,10 +33,11 @@ jobs:
           python3 - <<'PYEOF'
           import zipfile
           src = zipfile.ZipFile('build/base.apk')
-          out = zipfile.ZipFile('build/unsigned.apk','w', zipfile.ZIP_DEFLATED)
-          for n in src.namelist():
-              out.writestr(n, src.read(n))
-          out.writestr('classes.dex', open('build/dex/classes.dex','rb').read())
+          out = zipfile.ZipFile('build/unsigned.apk','w', zipfile.ZIP_STORED)
+          # 逐条目保留原始压缩方式（resources.arsc 必须 STORED，Android 11+ 硬性要求）
+          for i in src.infolist():
+              out.writestr(i, src.read(i.filename), compress_type=i.compress_type)
+          out.writestr('classes.dex', open('build/dex/classes.dex','rb').read(), compress_type=zipfile.ZIP_DEFLATED)
           out.close()
           print('apk entries:', len(src.namelist())+1)
           PYEOF
