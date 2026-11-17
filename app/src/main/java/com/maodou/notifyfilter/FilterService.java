@@ -55,7 +55,16 @@ public class FilterService extends NotificationListenerService {
 
     @Override
     public void onListenerConnected() {
-        // 常驻通知：保活 + 入口
+        postResident();
+    }
+
+    @Override
+    public int onStartCommand(android.content.Intent i, int flags, int startId) {
+        postResident();
+        return START_STICKY;
+    }
+
+    private void postResident() {
         ensureChannels();
         Notification n = new Notification.Builder(this, RESIDENT_CHANNEL)
             .setSmallIcon(android.R.drawable.ic_dialog_info)

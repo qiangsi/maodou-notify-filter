@@ -193,6 +193,11 @@ public class MainActivity extends Activity {
 
     List<Map<String, Object>> buildSmartItems(SharedPreferences sp) {
         List<Map<String, Object>> items = new ArrayList<>();
+        // 通知历史入口放顶部，不用滚动就能看到
+        Map<String, Object> hist = new HashMap<>();
+        hist.put("type", "history");
+        hist.put("label", "🕓 " + t(R.string.history));
+        items.add(hist);
         // global switch
         Map<String, Object> g = new HashMap<>();
         g.put("type", "switch"); g.put("key", KEY_GLOBAL_ON());
@@ -216,10 +221,6 @@ public class MainActivity extends Activity {
         cfg.put("type", "ai");
         cfg.put("label", t(R.string.ai_config));
         items.add(cfg);
-        Map<String, Object> hist = new HashMap<>();
-        hist.put("type", "history");
-        hist.put("label", t(R.string.history));
-        items.add(hist);
         return items;
     }
 
