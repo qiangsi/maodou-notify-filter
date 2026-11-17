@@ -1,0 +1,53 @@
+name: android
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Accept licenses
+        run: yes | sdkmanager --licenses || true
+      - name: Build APK (aapt2 + javac + d8)
+        run: |
+          set -e
+          SDK=$ANDROID_HOME
+          BT=$SDK/build-tools/34.0.0
+          PLAT=$SDK/platforms/android-34/android.jar
+          mkdir -p build/gen build/obj build/dex
+          $BT/aapt2 compile --dir app/src/main/res -o build/res.zip
+          $BT/aapt2 link -o build/base.apk -I $PLAT --manifest app/src/main/AndroidManifest.xml \
+            --java build/gen --auto-add-overlay build/res.zip
+          javac -source 11 -target 11 -classpath $PLAT -d build/obj \
+            build/gen/com/maodou/notifyfilter/R.java \
+            $(find app/src/main/java -name '*.java')
+          $BT/d8 --release --min-api 24 --lib $PLAT --output build/dex $(find build/obj -name '*.class')
+          python3 - <<'PYEOF'
+          import zipfile
+          src = zipfile.ZipFile('build/base.apk')
+          out = zipfile.ZipFile('build/unsigned.apk','w', zipfile.ZIP_DEFLATED)
+          for n in src.namelist():
+              out.writestr(n, src.read(n))
+          out.writestr('classes.dex', open('build/dex/classes.dex','rb').read())
+          out.close()
+          print('apk entries:', len(src.namelist())+1)
+          PYEOF
+          $BT/zipalign -f 4 build/unsigned.apk build/aligned.apk
+          keystore=/tmp/debug.keystore
+          keytool -genkeypair -keystore $keystore -alias androiddebugkey \
+            -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US" \
+            -keyalg RSA -keysize 2048 -validity 10000 2>/dev/null
+          $BT/apksigner sign --ks $keystore --ks-pass pass:android --out notify-filter.apk build/aligned.apk
+          $BT/apksigner verify notify-filter.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: notify-filter-apk
+          path: notify-filter.apk

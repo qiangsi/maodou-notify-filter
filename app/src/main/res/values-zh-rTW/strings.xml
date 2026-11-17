@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tab_smart">智能</string>
+    <string name="tab_analysis">分析</string>
+    <string name="tab_settings">設定</string>
+    <string name="pass_rule">放行規則</string>
+    <string name="filter_rule">過濾規則</string>
+    <string name="global_on">總開關（開啟過濾）</string>
+    <string name="ai_filter">AI 過濾增強</string>
+    <string name="ai_config">AI API 設定</string>
+    <string name="api_url">API 地址（OpenAI 相容）</string>
+    <string name="api_model">模型名稱</string>
+    <string name="api_token">API Key</string>
+    <string name="cat_media">媒體通知</string>
+    <string name="cat_msg">訊息通知</string>
+    <string name="cat_conversation">對話通知</string>
+    <string name="cat_sms">簡訊通知</string>
+    <string name="cat_ongoing">常駐通知</string>
+    <string name="cat_call">來電通知</string>
+    <string name="day">按日</string>
+    <string name="week">按週</string>
+    <string name="month">按月</string>
+    <string name="notify_stat">通知統計（綠=放行，紅=過濾）</string>
+    <string name="no_data">暫無資料</string>
+    <string name="passed">放行</string>
+    <string name="blocked">過濾</string>
+    <string name="theme_color">主題顏色</string>
+    <string name="day_mode">日色模式</string>
+    <string name="night_mode">夜色模式</string>
+    <string name="language">語言</string>
+    <string name="app_lock">應用鎖</string>
+    <string name="lock_on">開啟（4位以上數字密碼）</string>
+    <string name="lock_off">關閉</string>
+    <string name="set_lock_code">設定鎖屏密碼（4位以上數字）</string>
+    <string name="enter_lock_code">輸入密碼解鎖</string>
+    <string name="lock_code_too_short">密碼至少4位</string>
+    <string name="lock_code_wrong">密碼錯誤，請重試</string>
+    <string name="faq">常見問題</string>
+    <string name="faq_text">1. 通知不生效？請在系統設定中授予本應用「通知使用權」。\n2. AI 過濾需要設定 OpenAI 相容 API。\n3. 統計資料保存在本地。</string>
+    <string name="feedback">意見建議回饋</string>
+    <string name="check_update">檢查更新</string>
+    <string name="export_cfg">匯出設定</string>
+    <string name="import_cfg">匯入設定</string>
+    <string name="export_ok">已匯出：</string>
+    <string name="import_ok">匯入成功</string>
+    <string name="no_file">未找到設定檔</string>
+    <string name="version">版本</string>
+</resources>

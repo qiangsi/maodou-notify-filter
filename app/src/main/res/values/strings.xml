@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">毛豆通知过滤助手</string>
+    <string name="tab_smart">智能</string>
+    <string name="tab_analysis">分析</string>
+    <string name="tab_settings">设置</string>
+    <string name="pass_rule">放行规则</string>
+    <string name="filter_rule">过滤规则</string>
+    <string name="global_on">总开关（开启过滤）</string>
+    <string name="ai_filter">AI 过滤增强</string>
+    <string name="ai_config">AI API 配置</string>
+    <string name="api_url">API 地址（OpenAI 兼容，如 https://api.openai.com/v1/chat/completions）</string>
+    <string name="api_model">模型名称</string>
+    <string name="api_token">API Key</string>
+    <string name="cat_media">媒体通知</string>
+    <string name="cat_msg">消息通知</string>
+    <string name="cat_conversation">对话通知</string>
+    <string name="cat_sms">短信通知</string>
+    <string name="cat_ongoing">常驻通知</string>
+    <string name="cat_call">来电通知</string>
+    <string name="day">按日</string>
+    <string name="week">按周</string>
+    <string name="month">按月</string>
+    <string name="notify_stat">通知统计（绿=放行，红=过滤）</string>
+    <string name="no_data">暂无数据，去开启通知使用权吧</string>
+    <string name="passed">放行</string>
+    <string name="blocked">过滤</string>
+    <string name="theme_color">主题颜色</string>
+    <string name="day_mode">日色模式</string>
+    <string name="night_mode">夜色模式</string>
+    <string name="language">语言</string>
+    <string name="app_lock">应用锁</string>
+    <string name="lock_on">开启（4位以上数字密码）</string>
+    <string name="lock_off">关闭</string>
+    <string name="set_lock_code">设置锁屏密码（4位以上数字）</string>
+    <string name="enter_lock_code">输入密码解锁</string>
+    <string name="lock_code_too_short">密码至少4位</string>
+    <string name="lock_code_wrong">密码错误，请重试</string>
+    <string name="faq">常见问题</string>
+    <string name="faq_text">1. 通知不生效？请在系统设置中授予本应用「通知使用权」。\n2. AI 过滤需要配置 OpenAI 兼容 API 地址与 Key。\n3. 统计数据保存在本地，导出配置可迁移到新设备。</string>
+    <string name="feedback">意见建议反馈</string>
+    <string name="check_update">检查更新</string>
+    <string name="export_cfg">导出配置</string>
+    <string name="import_cfg">导入配置</string>
+    <string name="export_ok">已导出：</string>
+    <string name="import_ok">导入成功</string>
+    <string name="no_file">未找到配置文件</string>
+    <string name="version">版本</string>
+</resources>
