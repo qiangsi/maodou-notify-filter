@@ -56,4 +56,8 @@
     <string name="cat_pie">Notification categories</string>
     <string name="perm_warn">⚠ Notification access not granted — filtering is off. Tap to grant.</string>
     <string name="change_code">Set / change PIN</string>
+    <string name="history">Notification history (filtered)</string>
+    <string name="resident_channel">Resident status</string>
+    <string name="resident_title">Notify Filter running</string>
+    <string name="resident_text">Tap to open · guarding your notification shade</string>
 </resources>

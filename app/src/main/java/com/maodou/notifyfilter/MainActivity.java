@@ -178,6 +178,7 @@ public class MainActivity extends Activity {
                 Map<String, Object> m = withWarn.get(pos);
                 if ("warn".equals(m.get("type"))) askNotificationAccess();
                 if ("ai".equals(m.get("type"))) aiConfigDialog();
+                if ("history".equals(m.get("type"))) showHistory();
             });
             return;
         }
@@ -186,6 +187,7 @@ public class MainActivity extends Activity {
         list.setOnItemClickListener((p, v, pos, id) -> {
             Map<String, Object> m = items.get(pos);
             if ("ai".equals(m.get("type"))) { aiConfigDialog(); }
+            if ("history".equals(m.get("type"))) { showHistory(); }
         });
     }
 
@@ -214,7 +216,49 @@ public class MainActivity extends Activity {
         cfg.put("type", "ai");
         cfg.put("label", t(R.string.ai_config));
         items.add(cfg);
+        Map<String, Object> hist = new HashMap<>();
+        hist.put("type", "history");
+        hist.put("label", t(R.string.history));
+        items.add(hist);
         return items;
+    }
+
+    void showHistory() {
+        btnPass.setText(t(R.string.tab_smart));
+        btnFilter.setText(t(R.string.tab_analysis));
+        btnAi.setText(t(R.string.tab_settings));
+        btnPass.setTextColor(accent()); btnFilter.setTextColor(fg()); btnAi.setTextColor(fg());
+        title.setText("🕓 " + t(R.string.history));
+        if (chartHost != null) { chartHost.removeAllViews(); body.removeView(chartHost); chartHost = null; }
+        list.setVisibility(View.VISIBLE);
+        List<Map<String, Object>> items = new ArrayList<>();
+        try {
+            SharedPreferences sp = getSharedPreferences(FilterService.HIST, MODE_PRIVATE);
+            JSONArray arr = new JSONArray(sp.getString("items", "[]"));
+            SimpleDateFormat df = new SimpleDateFormat("MM-dd HH:mm", Locale.US);
+            for (int i = arr.length() - 1; i >= 0; i--) {
+                JSONObject o = arr.getJSONObject(i);
+                Map<String, Object> m = new HashMap<>();
+                m.put("type", "hist");
+                String catKey = "cat_" + o.optString("cat", "msg");
+                String catName = o.optString("cat", "msg");
+                for (int c = 0; c < CATS.length; c++)
+                    if (CATS[c].equals(catName)) { catName = catLabels()[c]; break; }
+                m.put("label", df.format(new Date(o.optLong("t", 0))) + "  [" + catName + "] "
+                    + o.optString("title", ""));
+                m.put("sub", o.optString("text", "") + "  · " + o.optString("pkg", ""));
+                items.add(m);
+            }
+        } catch (Exception ignored) {}
+        if (items.isEmpty()) {
+            Map<String, Object> m = new HashMap<>();
+            m.put("type", "info");
+            m.put("label", t(R.string.no_data));
+            m.put("sub", "");
+            items.add(m);
+        }
+        list.setAdapter(makeAdapter(items));
+        list.setOnItemClickListener(null);
     }
 
     static String KEY_GLOBAL_ON() { return "global_on"; }

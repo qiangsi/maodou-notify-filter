@@ -6,6 +6,8 @@ import android.app.NotificationManager;
 import android.content.SharedPreferences;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -13,12 +15,14 @@ import java.util.Locale;
 public class FilterService extends NotificationListenerService {
     public static final String PREF = "cfg";
     public static final String LOG = "notify_log";
+    public static final String HIST = "notify_hist";
     public static final String KEY_GLOBAL_ON = "global_on";
     public static final String KEY_AI_ON = "ai_on";
     public static final String KEY_AI_URL = "ai_url";
     public static final String KEY_AI_MODEL = "ai_model";
     public static final String KEY_AI_TOKEN = "ai_token";
     static final String SILENT_CHANNEL = "filtered_silent";
+    static final String RESIDENT_CHANNEL = "resident";
 
     static final String[] CAT_KEYS = {"media","msg","conversation","sms","ongoing","call"};
 
@@ -35,13 +39,34 @@ public class FilterService extends NotificationListenerService {
         return c != null ? c : "msg";
     }
 
-    private void ensureSilentChannel() {
+    private void ensureChannels() {
         NotificationManager nm = getSystemService(NotificationManager.class);
-        NotificationChannel ch = new NotificationChannel(SILENT_CHANNEL,
+        NotificationChannel silent = new NotificationChannel(SILENT_CHANNEL,
             getString(R.string.silent_channel), NotificationManager.IMPORTANCE_LOW);
-        ch.setSound(null, null);
-        ch.enableVibration(false);
-        nm.createNotificationChannel(ch);
+        silent.setSound(null, null);
+        silent.enableVibration(false);
+        nm.createNotificationChannel(silent);
+        NotificationChannel res = new NotificationChannel(RESIDENT_CHANNEL,
+            getString(R.string.resident_channel), NotificationManager.IMPORTANCE_MIN);
+        res.setSound(null, null);
+        res.setShowBadge(false);
+        nm.createNotificationChannel(res);
+    }
+
+    @Override
+    public void onListenerConnected() {
+        // 常驻通知：保活 + 入口
+        ensureChannels();
+        Notification n = new Notification.Builder(this, RESIDENT_CHANNEL)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle(getString(R.string.resident_title))
+            .setContentText(getString(R.string.resident_text))
+            .setOngoing(true)
+            .setContentIntent(android.app.PendingIntent.getActivity(this, 0,
+                new android.content.Intent(this, MainActivity.class),
+                android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE))
+            .build();
+        getSystemService(NotificationManager.class).notify(RESIDENT_CHANNEL, 1, n);
     }
 
     @Override
@@ -77,8 +102,9 @@ public class FilterService extends NotificationListenerService {
         String pkg = sbn.getPackageName();
         try { cancelNotification(sbn.getKey()); } catch (Exception ignored) {}
         log(cat, "filter");
+        addHistory(pkg, cat, title, text);
         try {
-            ensureSilentChannel();
+            ensureChannels();
             Notification quiet = new Notification.Builder(this, SILENT_CHANNEL)
                 .setSmallIcon(n.getSmallIcon() != null
                     ? n.getSmallIcon().getResId() : android.R.drawable.ic_dialog_info)
@@ -97,5 +123,22 @@ public class FilterService extends NotificationListenerService {
         String day = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
         String key = day + "|" + cat + "|" + action;
         sp.edit().putInt(key, sp.getInt(key, 0) + 1).apply();
+    }
+
+    /** 通知历史：最多保留 200 条被过滤的通知 */
+    private void addHistory(String pkg, String cat, String title, String text) {
+        try {
+            SharedPreferences sp = getSharedPreferences(HIST, MODE_PRIVATE);
+            JSONArray arr = new JSONArray(sp.getString("items", "[]"));
+            JSONObject o = new JSONObject();
+            o.put("t", System.currentTimeMillis());
+            o.put("pkg", pkg);
+            o.put("cat", cat);
+            o.put("title", title);
+            o.put("text", text == null ? "" : text);
+            arr.put(o);
+            while (arr.length() > 200) arr.remove(0);
+            sp.edit().putString("items", arr.toString()).apply();
+        } catch (Exception ignored) {}
     }
 }

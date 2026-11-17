@@ -57,4 +57,8 @@
     <string name="cat_pie">通知类别占比</string>
     <string name="perm_warn">⚠ 未授予通知使用权，过滤不生效——点这里去授权</string>
     <string name="change_code">设置/修改密码</string>
+    <string name="history">通知历史（被过滤）</string>
+    <string name="resident_channel">常驻状态</string>
+    <string name="resident_title">毛豆通知过滤助手运行中</string>
+    <string name="resident_text">点按打开 · 正在守护你的通知栏</string>
 </resources>
