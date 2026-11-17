@@ -24,6 +24,7 @@ jobs:
           mkdir -p build/gen build/obj build/dex
           $BT/aapt2 compile --dir app/src/main/res -o build/res.zip
           $BT/aapt2 link -o build/base.apk -I $PLAT --manifest app/src/main/AndroidManifest.xml \
+            --min-sdk-version 24 --target-sdk-version 34 \
             --java build/gen --auto-add-overlay build/res.zip
           javac -source 11 -target 11 -classpath $PLAT -d build/obj \
             build/gen/com/maodou/notifyfilter/R.java \
