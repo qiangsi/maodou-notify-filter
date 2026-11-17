@@ -13,7 +13,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
       - name: Accept licenses
         run: yes | sdkmanager --licenses || true
       - name: Build APK (aapt2 + javac + d8)
