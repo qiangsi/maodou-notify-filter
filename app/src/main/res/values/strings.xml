@@ -49,4 +49,10 @@
     <string name="biometric_unlock">指纹/面容解锁</string>
     <string name="biometric_on">开启（指纹或设备支持的生物识别）</string>
     <string name="biometric_off">关闭</string>
+    <string name="silent_channel">已过滤通知（静默）</string>
+    <string name="perm_needed">需要通知使用权</string>
+    <string name="perm_msg">过滤通知需要授予本应用「通知使用权」。请点击「去授权」，在列表中勾选毛豆通知过滤助手。</string>
+    <string name="go_grant">去授权</string>
+    <string name="ai_provider">AI 提供商</string>
+    <string name="cat_pie">通知类别占比</string>
 </resources>

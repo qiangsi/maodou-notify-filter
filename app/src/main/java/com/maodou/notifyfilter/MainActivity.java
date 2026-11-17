@@ -123,7 +123,24 @@ public class MainActivity extends Activity {
         }
     }
 
+    boolean nlServiceEnabled() {
+        String flat = android.provider.Settings.Secure.getString(getContentResolver(),
+            "enabled_notification_listeners");
+        return flat != null && flat.contains(getPackageName());
+    }
+
+    void askNotificationAccess() {
+        new AlertDialog.Builder(this)
+            .setTitle(t(R.string.perm_needed))
+            .setMessage(t(R.string.perm_msg))
+            .setPositiveButton(t(R.string.go_grant), (d, w) ->
+                startActivity(new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")))
+            .setNegativeButton(android.R.string.cancel, null)
+            .show();
+    }
+
     void showSmart() {
+        if (!nlServiceEnabled()) askNotificationAccess();
         title.setText("🌱 " + t(R.string.tab_smart));
         btnPass.setText(t(R.string.pass_rule));
         btnFilter.setText(t(R.string.filter_rule));
@@ -165,13 +182,39 @@ public class MainActivity extends Activity {
 
     void aiConfigDialog() {
         SharedPreferences sp = getSharedPreferences(PREF, MODE_PRIVATE);
+        String[] names = {"OpenAI", "DeepSeek", "智谱 GLM", "月之暗面 Kimi", "通义千问", "自定义"};
+        String[] urls = {
+            "https://api.openai.com/v1/chat/completions",
+            "https://api.deepseek.com/chat/completions",
+            "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+            "https://api.moonshot.cn/v1/chat/completions",
+            "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+            ""};
+        String[] models = {"gpt-4o-mini", "deepseek-chat", "glm-4-flash", "moonshot-v1-8k", "qwen-turbo", ""};
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
         box.setPadding(dp(16), dp(12), dp(16), dp(0));
-        EditText url = field(box, t(R.string.api_url),
-                sp.getString("ai_url", ""));
-        EditText model = field(box, t(R.string.api_model),
-                sp.getString("ai_model", "gpt-4o-mini"));
+        TextView pv = new TextView(this);
+        pv.setText(t(R.string.ai_provider)); pv.setTextColor(fg()); pv.setTextSize(13);
+        box.addView(pv);
+        TextView providerBtn = new TextView(this);
+        String curUrl = sp.getString("ai_url", "");
+        providerBtn.setText(curUrl.isEmpty() ? names[5] : presetNameOf(curUrl, names, urls));
+        providerBtn.setTextSize(14); providerBtn.setTextColor(accent());
+        providerBtn.setPadding(0, dp(6), 0, dp(6));
+        box.addView(providerBtn);
+        final String[] chosen = {providerBtn.getText().toString()};
+        EditText url = field(box, t(R.string.api_url), curUrl);
+        EditText model = field(box, t(R.string.api_model), sp.getString("ai_model", "gpt-4o-mini"));
+        providerBtn.setOnClickListener(v -> new AlertDialog.Builder(this)
+            .setItems(names, (d, w) -> {
+                chosen[0] = names[w];
+                providerBtn.setText(names[w]);
+                if (w < urls.length - 1) {
+                    url.setText(urls[w]);
+                    model.setText(models[w]);
+                }
+            }).show());
         EditText token = field(box, t(R.string.api_token),
                 sp.getString("ai_token", ""));
         new AlertDialog.Builder(this)
@@ -271,6 +314,64 @@ public class MainActivity extends Activity {
             + "  ■ " + t(R.string.blocked));
         legend.setTextColor(fg()); legend.setTextSize(12); legend.setPadding(dp(4), dp(8), dp(4), 0);
         body.addView(legend);
+        renderPie();
+    }
+
+    /** 饼图：各通知类别占比（用 Canvas 画扇形，原生无依赖） */
+    void renderPie() {
+        SharedPreferences sp = getSharedPreferences(LOG, MODE_PRIVATE);
+        int[] totals = new int[CATS.length];
+        int sum = 0;
+        for (Map.Entry<String, ?> e : sp.getAll().entrySet()) {
+            String[] p = e.getKey().split("\\|");
+            if (p.length != 3) continue;
+            for (int i = 0; i < CATS.length; i++) {
+                if (CATS[i].equals(p[1])) {
+                    int v = (Integer) e.getValue();
+                    totals[i] += v; sum += v;
+                }
+            }
+        }
+        if (sum == 0) return;
+        final int total = sum;
+        final int[] t2 = totals;
+        TextView head2 = new TextView(this);
+        head2.setText(t(R.string.cat_pie));
+        head2.setTextColor(fg()); head2.setTextSize(15); head2.setPadding(dp(4), dp(12), dp(4), dp(4));
+        body.addView(head2);
+        int size = dp(180);
+        android.graphics.Paint paint = new android.graphics.Paint();
+        paint.setAntiAlias(true);
+        int[] colors = {0xFF5C6BC0, 0xFF66BB6A, 0xFFFFA726, 0xFFEF5350, 0xFF26C6DA, 0xFFAB47BC};
+        LinearLayout wrap = new LinearLayout(this);
+        wrap.setOrientation(LinearLayout.VERTICAL);
+        wrap.setBackgroundColor(card());
+        wrap.setGravity(Gravity.CENTER_HORIZONTAL);
+        wrap.setPadding(dp(10), dp(10), dp(10), dp(10));
+        android.view.View pie = new android.view.View(this) {
+            @Override protected void onDraw(android.graphics.Canvas c) {
+                float start = -90f;
+                int cx = getWidth() / 2, cy = getHeight() / 2;
+                int r = Math.min(cx, cy) - dp(4);
+                for (int i = 0; i < CATS.length; i++) {
+                    if (t2[i] == 0) continue;
+                    float sweep = 360f * t2[i] / total;
+                    paint.setColor(colors[i]);
+                    c.drawArc(cx - r, cy - r, cx + r, cy + r, start, sweep, true, paint);
+                    start += sweep;
+                }
+            }
+        };
+        wrap.addView(pie, new LinearLayout.LayoutParams(size, size));
+        for (int i = 0; i < CATS.length; i++) {
+            if (totals[i] == 0) continue;
+            TextView row = new TextView(this);
+            row.setText(String.format(Locale.US, "■ %s  %d (%d%%)",
+                catLabels()[i], totals[i], totals[i] * 100 / sum));
+            row.setTextColor(fg()); row.setTextSize(12);
+            wrap.addView(row);
+        }
+        body.addView(wrap);
     }
 
     String bucketOf(String day, String mode, SimpleDateFormat df) {
@@ -322,6 +423,11 @@ public class MainActivity extends Activity {
                 }
             }
         });
+    }
+
+    String presetNameOf(String url, String[] names, String[] urls) {
+        for (int i = 0; i < urls.length; i++) if (urls[i].equals(url)) return names[i];
+        return names[5];
     }
 
     void add(List<Map<String, Object>> items, String type, String label, String sub) {

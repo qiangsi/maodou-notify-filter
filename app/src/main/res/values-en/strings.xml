@@ -48,4 +48,10 @@
     <string name="biometric_unlock">Fingerprint / Face unlock</string>
     <string name="biometric_on">On (fingerprint or supported biometrics)</string>
     <string name="biometric_off">Off</string>
+    <string name="silent_channel">Filtered notifications (silent)</string>
+    <string name="perm_needed">Notification access required</string>
+    <string name="perm_msg">Filtering needs the "Notification access" permission. Tap Grant and enable 毛豆通知过滤助手 in the list.</string>
+    <string name="go_grant">Grant</string>
+    <string name="ai_provider">AI provider</string>
+    <string name="cat_pie">Notification categories</string>
 </resources>
