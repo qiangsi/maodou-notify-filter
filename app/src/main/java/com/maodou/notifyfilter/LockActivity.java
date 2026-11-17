@@ -36,11 +36,13 @@ public class LockActivity extends Activity {
                 if (input.length() >= 4) {
                     sp.edit().putString("lock_code", input).putBoolean("lock", true).apply();
                     Toast.makeText(this, R.string.import_ok, Toast.LENGTH_SHORT).show();
+                    setResult(RESULT_OK);
                     finish();
                 } else {
                     tv.setText(getString(R.string.lock_code_too_short));
                 }
             } else if (input.equals(code)) {
+                setResult(RESULT_OK);
                 finish();
             } else {
                 tv.setText(getString(R.string.lock_code_wrong));
@@ -50,21 +52,25 @@ public class LockActivity extends Activity {
         root.addView(ok);
         setContentView(root);
 
-        // 已设密码 + 开了生物识别 + API 28+ + 有指纹硬件：先弹指纹，失败/取消回退密码输入
-        if (!code.isEmpty() && sp.getBoolean("lock_biometric", false)
+        // 指纹条件：已有密码 + 开了生物识别 + API 28+ + 有指纹硬件
+        boolean bio = !code.isEmpty() && sp.getBoolean("lock_biometric", false)
                 && Build.VERSION.SDK_INT >= 28
-                && getPackageManager().hasSystemFeature("android.hardware.fingerprint")) {
-            BiometricPrompt prompt = new BiometricPrompt.Builder(this)
-                .setTitle(getString(R.string.app_name))
-                .setDescription(getString(R.string.biometric_unlock))
-                .build();
-            prompt.authenticate(new CancellationSignal(),
-                getMainExecutor(), new BiometricPrompt.AuthenticationCallback() {
-                    @Override public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult r) {
-                        finish();
-                    }
-                });
-        }
+                && getPackageManager().hasSystemFeature("android.hardware.fingerprint");
+        if (bio) showBiometric(sp);
+    }
+
+    void showBiometric(SharedPreferences sp) {
+        BiometricPrompt prompt = new BiometricPrompt.Builder(this)
+            .setTitle(getString(R.string.app_name))
+            .setDescription(getString(R.string.biometric_unlock))
+            .build();
+        prompt.authenticate(new CancellationSignal(),
+            getMainExecutor(), new BiometricPrompt.AuthenticationCallback() {
+                @Override public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult r) {
+                    setResult(RESULT_OK);
+                    finish();
+                }
+            });
     }
 
     int dp(int v) { return (int) (v * getResources().getDisplayMetrics().density); }

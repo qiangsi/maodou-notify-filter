@@ -487,10 +487,13 @@ public class MainActivity extends Activity {
             Map<String, Object> m = items.get(pos);
             String label = (String) m.get("label");
             if (m.get("type").equals("pick")) {
-                if (label.equals(t(R.string.theme_color))) themeDialog();
-                else if (label.equals(t(R.string.language))) langDialog();
-                else if (label.equals(t(R.string.biometric_unlock))) biometricDialog();
-                else lockDialog();
+                if (label.equals(t(R.string.app_lock))) { lockDialog(); return; }
+                // 应用锁开启后，其余敏感操作需先验证
+                requireAuthThen(() -> {
+                    if (label.equals(t(R.string.theme_color))) themeDialog();
+                    else if (label.equals(t(R.string.language))) langDialog();
+                    else if (label.equals(t(R.string.biometric_unlock))) biometricDialog();
+                });
             } else if (m.get("type").equals("info")) {
                 if (label.equals(t(R.string.faq))) faqDialog();
                 else if (label.equals(t(R.string.feedback))) {
@@ -500,6 +503,35 @@ public class MainActivity extends Activity {
                 }
             }
         });
+    }
+
+    boolean authed = false; // 本次会话验证后放行，直到离开页面
+
+    /** 应用锁开启时，敏感操作前先验证（密码或指纹），通过后执行 action */
+    void requireAuthThen(Runnable action) {
+        SharedPreferences sp = getSharedPreferences(PREF, MODE_PRIVATE);
+        boolean locked = sp.getBoolean("lock", false) && !sp.getString("lock_code", "").isEmpty();
+        if (!locked || authed) { action.run(); return; }
+        pendingAction = action;
+        boolean useBio = sp.getBoolean("lock_biometric", false)
+            && Build.VERSION.SDK_INT >= 28
+            && getPackageManager().hasSystemFeature("android.hardware.fingerprint");
+        Intent it = new Intent(this, LockActivity.class);
+        it.putExtra("verify_only", true);
+        it.putExtra("use_biometric", useBio);
+        startActivityForResult(it, REQ_VERIFY);
+    }
+
+    Runnable pendingAction;
+    static final int REQ_VERIFY = 21;
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQ_VERIFY && resultCode == RESULT_OK) {
+            authed = true;
+            if (pendingAction != null) { Runnable a = pendingAction; pendingAction = null; a.run(); }
+        }
     }
 
     String presetNameOf(String url, String[] names, String[] urls) {
@@ -566,7 +598,7 @@ public class MainActivity extends Activity {
                 } else {
                     // 开启/修改：去 LockActivity 设密码
                     sp.edit().putBoolean("lock", true).apply();
-                    startActivity(new Intent(this, LockActivity.class));
+                    startActivityForResult(new Intent(this, LockActivity.class), REQ_VERIFY);
                 }
             }).show();
     }
