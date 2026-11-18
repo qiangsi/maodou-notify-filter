@@ -6,8 +6,6 @@ import android.app.NotificationManager;
 import android.content.SharedPreferences;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -84,17 +82,39 @@ public class FilterService extends NotificationListenerService {
         Notification n = sbn.getNotification();
         SharedPreferences sp = getSharedPreferences(PREF, MODE_PRIVATE);
         sp.edit().putLong("last_seen", System.currentTimeMillis()).apply();
+        String title = n.extras.getString(Notification.EXTRA_TITLE, "");
+        String text = n.extras.getString(Notification.EXTRA_TEXT, "");
+        String pkg = sbn.getPackageName();
+
+        // FR-H1: 全量落库（含后续被过滤的），先拿 id 便于回写处理结果
+        long hid = HistoryStore.add(this, pkg, title, text, HistoryStore.ACTION_KEEP, null);
+
         if (!sp.getBoolean(KEY_GLOBAL_ON, true)) return;
         String cat = catOf(n);
         if (!sp.getBoolean("cat_" + cat, true)) {
             filterSilently(sbn, n, cat);
+            HistoryStore.markAction(this, hid, HistoryStore.ACTION_FILTER, null);
+            return;
+        }
+        // FR-R1: 规则引擎，首条命中即执行
+        RuleEngine.Rule hit = RuleEngine.match(this, pkg, title, text);
+        if (hit != null) {
+            String ruleName = hit.action == RuleEngine.ACT_REMOVE ? "消除" : "静音";
+            if (hit.action == RuleEngine.ACT_REMOVE) {
+                try { cancelNotification(sbn.getKey()); } catch (Exception ignored) {}
+            } else {
+                filterSilently(sbn, n, cat); // 静音 = 静默渠道重发
+            }
+            HistoryStore.markAction(this, hid, HistoryStore.ACTION_RULE, ruleName);
+            log(cat, "filter");
             return;
         }
         if (sp.getBoolean(KEY_AI_ON, false)) {
-            String title = n.extras.getString(Notification.EXTRA_TITLE, "");
-            String text = n.extras.getString(Notification.EXTRA_TEXT, "");
             AiFilter.evaluateAsync(this, title, text, cat, block -> {
-                if (block) log(cat, "ai");
+                if (block) {
+                    HistoryStore.markAction(this, hid, HistoryStore.ACTION_AI, "AI");
+                    log(cat, "ai");
+                }
             });
         } else {
             log(cat, "pass");
@@ -111,7 +131,6 @@ public class FilterService extends NotificationListenerService {
         String pkg = sbn.getPackageName();
         try { cancelNotification(sbn.getKey()); } catch (Exception ignored) {}
         log(cat, "filter");
-        addHistory(pkg, cat, title, text);
         try {
             ensureChannels();
             Notification quiet = new Notification.Builder(this, SILENT_CHANNEL)
@@ -132,22 +151,5 @@ public class FilterService extends NotificationListenerService {
         String day = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
         String key = day + "|" + cat + "|" + action;
         sp.edit().putInt(key, sp.getInt(key, 0) + 1).apply();
-    }
-
-    /** 通知历史：最多保留 200 条被过滤的通知 */
-    private void addHistory(String pkg, String cat, String title, String text) {
-        try {
-            SharedPreferences sp = getSharedPreferences(HIST, MODE_PRIVATE);
-            JSONArray arr = new JSONArray(sp.getString("items", "[]"));
-            JSONObject o = new JSONObject();
-            o.put("t", System.currentTimeMillis());
-            o.put("pkg", pkg);
-            o.put("cat", cat);
-            o.put("title", title);
-            o.put("text", text == null ? "" : text);
-            arr.put(o);
-            while (arr.length() > 200) arr.remove(0);
-            sp.edit().putString("items", arr.toString()).apply();
-        } catch (Exception ignored) {}
     }
 }
