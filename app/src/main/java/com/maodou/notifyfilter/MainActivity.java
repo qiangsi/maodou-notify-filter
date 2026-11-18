@@ -178,7 +178,9 @@ public class MainActivity extends Activity {
                 Map<String, Object> m = withWarn.get(pos);
                 if ("warn".equals(m.get("type"))) askNotificationAccess();
                 if ("ai".equals(m.get("type"))) aiConfigDialog();
-                if ("history".equals(m.get("type"))) showHistory();
+                if ("history".equals(m.get("type"))) startActivity(new Intent(this, HistoryActivity.class));
+                if ("history2".equals(m.get("type"))) showHistory();
+                if ("rules".equals(m.get("type"))) startActivity(new Intent(this, RulesActivity.class));
             });
             return;
         }
@@ -187,17 +189,28 @@ public class MainActivity extends Activity {
         list.setOnItemClickListener((p, v, pos, id) -> {
             Map<String, Object> m = items.get(pos);
             if ("ai".equals(m.get("type"))) { aiConfigDialog(); }
-            if ("history".equals(m.get("type"))) { showHistory(); }
+            if ("history".equals(m.get("type"))) { startActivity(new Intent(this, HistoryActivity.class)); }
+            if ("history2".equals(m.get("type"))) { showHistory(); }
+            if ("rules".equals(m.get("type"))) { startActivity(new Intent(this, RulesActivity.class)); }
         });
     }
 
     List<Map<String, Object>> buildSmartItems(SharedPreferences sp) {
         List<Map<String, Object>> items = new ArrayList<>();
-        // 通知历史入口放顶部，不用滚动就能看到
+        // v1.5.0: 全量历史 + 规则引擎入口放顶部
         Map<String, Object> hist = new HashMap<>();
         hist.put("type", "history");
         hist.put("label", "🕓 " + t(R.string.history));
         items.add(hist);
+        Map<String, Object> rules = new HashMap<>();
+        rules.put("type", "rules");
+        rules.put("label", "📋 过滤规则（App/关键字/时间段 → 消除/静音）");
+        items.add(rules);
+        // 旧版被过滤历史入口保留，指向新的全量历史
+        Map<String, Object> hist2 = new HashMap<>();
+        hist2.put("type", "history2");
+        hist2.put("label", "🔎 旧版历史（仅被过滤，最多200条）");
+        items.add(hist2);
         // global switch
         Map<String, Object> g = new HashMap<>();
         g.put("type", "switch"); g.put("key", KEY_GLOBAL_ON());
