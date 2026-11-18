@@ -42,11 +42,9 @@ jobs:
           print('apk entries:', len(src.namelist())+1)
           PYEOF
           $BT/zipalign -f 4 build/unsigned.apk build/aligned.apk
-          keystore=/tmp/debug.keystore
-          keytool -genkeypair -keystore $keystore -alias androiddebugkey \
-            -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US" \
-            -keyalg RSA -keysize 2048 -validity 10000 2>/dev/null
-          $BT/apksigner sign --ks $keystore --ks-pass pass:android --out notify-filter.apk build/aligned.apk
+          # 固定 keystore（base64 secrets.RELEASE_KEYSTORE），保证每次构建签名一致，可覆盖升级
+          echo "$RELEASE_KEYSTORE" | base64 -d > /tmp/release.keystore
+          $BT/apksigner sign --ks /tmp/release.keystore --ks-pass pass:android --out notify-filter.apk build/aligned.apk
           $BT/apksigner verify notify-filter.apk
       - uses: actions/upload-artifact@v4
         with:
