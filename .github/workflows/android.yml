@@ -16,6 +16,8 @@ jobs:
       - name: Accept licenses
         run: yes | sdkmanager --licenses || true
       - name: Build APK (aapt2 + javac + d8)
+        env:
+          RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
         run: |
           set -e
           SDK=$ANDROID_HOME
